@@ -20,7 +20,7 @@ def parse_GET_Request(headers):
     params = {}
     for i in headers[1:]:
         try:
-            headerField = i[:i.index(':')] 
+            headerField = i[:i.index(':')]
             params[headerField] = i[i.index(':') + 2 : len(i) - 1]
         except :
             pass
@@ -37,15 +37,15 @@ def parse_GET_Request(headers):
         else:
             path = documentRoot + path
         global resource
-        global f        
+        global f
         f = open(path,"r")
         resource = f.read()
         try:
             data = len(resource)
         except :
-            pass        
+            pass
         # print("OK")
-        res = generateResponse(data,200)
+        res = generateResponse(data,200,resource)
         return res #Proper data encoding and sending as a HTTP response
     except FileNotFoundError:
         res = generateResponse(data,404)
@@ -95,27 +95,21 @@ if __name__ == "__main__":
 
     print("Listening on port {}".format(sys.argv[1]))
     # TODO
-    # Implement with multithreading 
+    # Implement with multithreading
     while 1:
         clientsocket, clientaddr = s.accept()
         # threading.Thread()
         try:
             while 1:
+                # receive data from the server and decoding
                 data = clientsocket.recv(5000).decode('utf-8')
-                # print(data)
+                print(data)
                 res = process(data)
                 if('\r\n\r\n' in data):
                     break
             print(res)
-            res = res.encode('utf-8')
-            data = resource
-            # clientsocket.send(res)
-            # clientsocket.send(b'\n')
-            # clientsocket.send(data.encode('utf-8'))
-            clientsocket.send(b"HTTP/1.1 200 OK\n" 
-         +"Content-Type: text/html\n"
-         +"\n" # Important!
-         +"<html><body>Hello World</body></html>\n");
+            clientsocket.send(res.encode('utf-8'))
+
         except e:
             print(e)
             print("err")
