@@ -8,7 +8,7 @@ from utils.mediaTypes import mediaTypes
 
 #Ideally get this from the config file
 documentRoot = str(pathlib.Path().absolute())
-print(documentRoot)
+# print(documentRoot)
 resource = None
 f = None
 method = ""
@@ -26,6 +26,8 @@ def parse_GET_Request(headers, method=""):
     # Implement Conditional Get
     # Implement Range Header
     # MIME Encoding response
+    # Cache parameters
+
     params = {}
     for i in headers[1:]:
         try:
@@ -34,7 +36,6 @@ def parse_GET_Request(headers, method=""):
         except :
             pass
 
-    # print(params)
     # Return 406 on not getting file with desired accept
 
     par = matchAccept(params['Accept'])
@@ -75,6 +76,7 @@ def parse_HEAD_Request(headers):
     # Returns the response of GET without the message body
     # TODO
     # Add more headers to the repsonse in the reponse.py file
+    # Handle Caching with GET
     return parse_GET_Request(headers, "HEAD")
 
 
@@ -99,9 +101,9 @@ def process(data):
         # elif (method == 'DELETE'):
         #     parse_DELETE_Request(headers)
         return
-    except Exception as e:
-        print(e)
-        print("Return 400 Bad request")
+    except:
+        error = sys.exc_info()[0]
+        print(error)
         return generateResponse(0,400)
 
 
@@ -132,9 +134,9 @@ if __name__ == "__main__":
             clientsocket.send(res.encode('utf-8'))
             if(method == "GET"):
                 clientsocket.send(resource)
-        except Exception as e:
-            print(e)
-            print("err")
+        except:
+            error = sys.exc_info()[0]
+            print(error)
         finally:
             clientsocket.close()
-            f.close()
+            # f.close()
