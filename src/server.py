@@ -5,13 +5,16 @@ import os
 import pathlib
 from response import generateResponse
 from utils.mediaTypes import mediaTypes
+from logger import Logger
 
-#Ideally get this from the config file
+# Ideally get this from the config file
 documentRoot = str(pathlib.Path().absolute())
 # print(documentRoot)
 resource = None
 f = None
 method = ""
+logger = None
+
 
 def matchAccept(headers):
     k = headers.split(',')
@@ -32,28 +35,28 @@ def parse_GET_Request(headers, method=""):
     for i in headers[1:]:
         try:
             headerField = i[:i.index(':')]
-            params[headerField] = i[i.index(':') + 2 : len(i) - 1]
-        except :
+            params[headerField] = i[i.index(':') + 2:len(i) - 1]
+        except:
             pass
 
     # Return 406 on not getting file with desired accept
-
+    global logger
     par = matchAccept(params['Accept'])
     path = headers[0].split(' ')[1]
     length = 0
     try:
-        if(path == "/"):
+        if (path == "/"):
             path = 'index.html'
         else:
             path = documentRoot + path
         global resource
         global f
-        f = open(path,"rb")
+        f = open(path, "rb")
         resource = f.read()
         lastModified = os.path.getmtime(path)
         try:
             length = len(resource)
-        except :
+        except:
             pass
         if(method == "HEAD"):
             res = generateResponse(length, 200, resource,
@@ -61,9 +64,11 @@ def parse_GET_Request(headers, method=""):
             print(res)
         else:
             res = generateResponse(length, 200, resource, lastModified, par[0])
+        logger.generate(headers[0], res)
         return res
     except FileNotFoundError:
-        res = generateResponse(length,404)
+        res = generateResponse(length, 404)
+        logger.generate(headers[0], res)
         return res
 
 
@@ -92,12 +97,12 @@ def process(data):
 
         if(method == 'GET'):
             return parse_GET_Request(headers)
-        elif (method == 'POST'):
-            parse_POST_Request(headers)
+        # elif (method == 'POST'):
+        #     parse_POST_Request(headers)
         # elif (method == 'PUT'):
         #     parse_PUT_Request(headers)
         elif (method == 'HEAD'):
-            parse_HEAD_Request(headers)
+            return parse_HEAD_Request(headers)
         # elif (method == 'DELETE'):
         #     parse_DELETE_Request(headers)
         return
@@ -119,6 +124,7 @@ if __name__ == "__main__":
     print("Listening on port {}".format(sys.argv[1]))
     # TODO
     # Implement with multithreading
+    logger = Logger()
     while 1:
         clientsocket, clientaddr = s.accept()
         # threading.Thread()
@@ -126,11 +132,10 @@ if __name__ == "__main__":
             while 1:
                 # receive data from the server and decoding
                 data = clientsocket.recv(5000).decode('utf-8')
-                # print(data)
                 res = process(data)
                 if('\r\n\r\n' in data):
                     break
-            print(res)
+
             clientsocket.send(res.encode('utf-8'))
             if(method == "GET"):
                 clientsocket.send(resource)
