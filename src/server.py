@@ -73,9 +73,6 @@ def parse_GET_Request(headers, method=""):
 
 
 def parse_POST_Request(headers):
-    # sends data to the server.
-    # The type of the body of the request is
-    # indicated by the Content-Type header.
     # TODO
     # Annotation of existing resources
     # Posting message to an existing bulleting, news board etc
@@ -83,6 +80,8 @@ def parse_POST_Request(headers):
     # Extending a database through an append operation.
 
     # For the purpose of the project, POST methods will write the incoming data into a logs file
+    global resource
+    global f
 
     params = {}
     body = []
@@ -92,38 +91,40 @@ def parse_POST_Request(headers):
             headerField = i[:i.index(':')]
             params[headerField] = i[i.index(':') + 2:len(i) - 1]
         except:
-            body.append(i)
+            if i != '\r' and i != '\n':
+                body.append(i)
 
     path = headers[0].split(' ')[1]
-    path = documentRoot + path
 
     if (path == "/"):
         path = 'index.html'
+    else:
+        path = documentRoot + path
 
     # Check if file at path is write-able else respond with FORBIDDEN response
     if os.path.exists(path):
         if os.access(path, os.W_OK):
-            f1 = open(path, 'w+')
+            f = open(path, 'rb')
             response_code = 200
         else:
             response_code = 403
     else:
-        f1 = open(path, 'w+')
+        f = open(path, 'rb')
         response_code = 201
 
     if response_code == 403:
         res = generateResponse(403)
         return res
 
+    resource = f.read()
+
     f2 = open('./logs/post_log.txt', 'w+')
-    global resource
-    resource = f1.read()
     # Handle application/x-www-form-urlencoded type of data
     content_type = params['Content-Type']
     if "application/x-www-form-urlencoded" in content_type:
         # example string name1=value1&name2=value2
         form_data = {}
-
+        print(body)
         for line in body:
             line = line.split('&')
             for param in line:
@@ -132,7 +133,7 @@ def parse_POST_Request(headers):
 
         f2.write(str(form_data))
 
-    res = generateResponse(len(resource),response_code, resource, None)
+    res = generateResponse(len(resource), response_code, resource, None)
     return res
 
 
@@ -162,7 +163,7 @@ def process(data):
         if(method == 'GET'):
             return parse_GET_Request(headers)
         elif (method == 'POST'):
-            parse_POST_Request(headers)
+            return parse_POST_Request(headers)
         # elif (method == 'PUT'):
         #     parse_PUT_Request(headers)
         elif (method == 'HEAD'):
