@@ -73,7 +73,33 @@ def parse_GET_Request(headers, method=""):
 
 
 def parse_POST_Request(headers):
-    pass
+    # TODO
+    # Annotation of existing resources
+    # Posting message to an existing bulleting, news board etc
+    # Providing a block of data, such as the result of submitting a form, to a data-handling process
+    # Extending a database through an append operation.
+
+    # For the purpose of the project, POST methods will write the incoming data into a logs file
+    params = {}
+    for i in headers[1:]:
+        try:
+            headerField = i[:i.index(':')]
+            params[headerField] = i[i.index(':') + 2:len(i) - 1]
+        except:
+            pass
+
+    path = headers[0].split(' ')[1]
+    path = documentRoot + path
+
+    try:
+        if (path == "/"):
+            path = 'index.html'
+
+        f = open('./logs/post_log.txt')
+
+
+
+
 def parse_PUT_Request(headers):
     pass
 def parse_HEAD_Request(headers):
