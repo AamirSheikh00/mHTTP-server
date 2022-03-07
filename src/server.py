@@ -103,20 +103,21 @@ def parse_POST_Request(headers):
     # Check if file at path is write-able else respond with FORBIDDEN response
     if os.path.exists(path):
         if os.access(path, os.W_OK):
-            f1 = open(path, 'w')
+            f1 = open(path, 'w+')
             response_code = 200
         else:
             response_code = 403
     else:
-        f1 = open(path, 'w')
+        f1 = open(path, 'w+')
         response_code = 201
 
     if response_code == 403:
         res = generateResponse(403)
         return res
 
-    f2 = open('./logs/post_log.txt')
-
+    f2 = open('./logs/post_log.txt', 'w+')
+    global resource
+    resource = f1.read()
     # Handle application/x-www-form-urlencoded type of data
     content_type = params['Content-Type']
     if "application/x-www-form-urlencoded" in content_type:
@@ -129,9 +130,9 @@ def parse_POST_Request(headers):
                 param = param.split('=')
                 form_data[param[0]] = param[1]
 
-        f2.write(form_data)
+        f2.write(str(form_data))
 
-    res = generateResponse(response_code)
+    res = generateResponse(len(resource),response_code, resource, None)
     return res
 
 
