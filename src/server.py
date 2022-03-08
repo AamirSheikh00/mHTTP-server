@@ -215,6 +215,33 @@ def process(data):
 
 
 
+def accept_client(s):
+
+    global resource
+    # print("Started a new thread")
+    while True:
+        client_socket, client_addr = s.accept()
+
+        try:
+            while True:
+                data = client_socket.recv(5000).decode('utf-8')
+                res = process(data)
+                if ('\r\n\r\n' in data):
+                    break
+
+            client_socket.send(res.encode('utf-8'))
+            if (method == "GET"):
+                client_socket.send(resource)
+
+        except:
+            error = sys.exc_info()[0]
+            print(error)
+        finally:
+            client_socket.close()
+
+    return
+
+
 
 
 
@@ -227,23 +254,29 @@ if __name__ == "__main__":
     # TODO
     # Implement with multithreading
     logger = Logger()
-    while 1:
-        clientsocket, clientaddr = s.accept()
-        # threading.Thread()
-        try:
-            while 1:
-                # receive data from the server and decoding
-                data = clientsocket.recv(5000).decode('utf-8')
-                res = process(data)
-                if('\r\n\r\n' in data):
-                    break
+    # while 1:
+    #     clientsocket, clientaddr = s.accept()
+    #     # threading.Thread()
+    #     try:
+    #         while 1:
+    #             # receive data from the server and decoding
+    #             data = clientsocket.recv(5000).decode('utf-8')
+    #             res = process(data)
+    #             if('\r\n\r\n' in data):
+    #                 break
 
-            clientsocket.send(res.encode('utf-8'))
-            if(method == "GET"):
-                clientsocket.send(resource)
-        except:
-            error = sys.exc_info()[0]
-            print(error)
-        finally:
-            clientsocket.close()
+    #         clientsocket.send(res.encode('utf-8'))
+    #         if(method == "GET"):
+    #             clientsocket.send(resource)
+    #     except:
+    #         error = sys.exc_info()[0]
+    #         print(error)
+    #     finally:
+    #         clientsocket.close()
             # f.close()
+
+    try:
+        server_thread = threading.Thread(target=accept_client, args=(s, ))
+        server_thread.start()
+    except:
+        print("Unable to start thread")
